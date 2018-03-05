@@ -1,16 +1,16 @@
 #!/bin/bash
 
-set -e
+set +eu
 
 function show_usage()
 {
-    echo "Usage: $0 [-c target class] [-m target method] [-o stdout] [-e stderr] [-n] [-h] -d driver target"
+    echo "Usage: $0 [-c target class] [-m target method] [-o stdout] [-e stderr] [-n] [-l] [-h] [-i] -d driver target"
 }
 
 function show_help()
 {
 	show_usage
-	echo << EOS
+	cat << EOS
 Emulates the test driver of the Microsoft C++ Unit Test Framework.
 Dependencies:
         bash                This script depends on some shell features specific to bash.
@@ -22,6 +22,8 @@ Options:
         -o <file>           Redirect standard output from the tests into a file.
         -e <file>           Redirect standard error output from the tests into a file.
         -n                  Just take a look at what will happen. (Dry-run)
+        -l                  Just list up test methods (intended for use by scripts).
+        -i                  Run in interactive mode.
         -h                  Display this help message and exit.
 EOS
 	exit 0
@@ -33,8 +35,10 @@ STDOUT_FILE=
 STDIN_FILE=
 DRIVER=
 DRYRUN_FLAG=false
+LIST_FLAG=false
+INTERACTIVE_FLAG=false
 
-while getopts c:m:o:e:d:nh OPT
+while getopts c:m:o:e:d:nlih OPT
 do
     case ${OPT} in
         d) DRIVER=$OPTARG
@@ -47,8 +51,12 @@ do
 			;;
 		e) STDIN_FILE=$OPTARG
 			;;
-		n) DRYRUN_FLAG="true"
+		n) DRYRUN_FLAG=true
 			;;
+        l) LIST_FLAG=true
+            ;;
+        i) INTERACTIVE_FLAG=true
+            ;;
         h) show_help
             ;;
     esac
@@ -56,13 +64,13 @@ done
 
 shift $((OPTIND - 1))
 
-if [ $# -lt 1 -o -z ${DRIVER} ]
+if [ $# -lt 1 ]
 then
 	show_usage
 	exit 1
 fi
 
-TARGET_OBJECT=`pwd`/$1
+TARGET_OBJECT=$1
 
 TEST_METHODS=(`objdump -j .testmethod -T -C ${TARGET_OBJECT} | awk 'NF==7{print $7}'`)
 TEST_METHODS_MANGLED=(`objdump -j .testmethod -T ${TARGET_OBJECT} | awk 'NF==7{print $7}'`)
@@ -70,6 +78,12 @@ TEST_INIT_METHODS=(`objdump -j .testmethodinit -T -C ${TARGET_OBJECT} | awk 'NF=
 TEST_INIT_METHODS_MANGLED=(`objdump -j .testmethodinit -T ${TARGET_OBJECT} | awk 'NF==7{print $7}'`)
 ALL_METHODS=(`objdump -T -C ${TARGET_OBJECT} | awk 'NF>=7{print $7}NF<7{print "dummy"}'`)
 ALL_METHODS_MANGLED=(`objdump -T ${TARGET_OBJECT} | awk 'NF>=7{print $7}NF<7{print "dummy"}'`)
+
+if [[ "${LIST_FLAG}" == "true" ]]
+then
+    echo ${TEST_METHODS[@]}
+    exit 0
+fi
 
 function find_ctor()
 {
@@ -134,7 +148,7 @@ function run_method()
 		fi
 	done
 
-	RUNNER_ARGS="${RUNNER_ARGS} `find_ctor ${FULL_CLASS_NAME}` `find_runner ${FULL_CLASS_NAME}` -o ${TARGET_OBJECT} ${TEST_METHODS_MANGLED[$1]}"
+	RUNNER_ARGS="${RUNNER_ARGS} `find_ctor ${FULL_CLASS_NAME}` `find_runner ${FULL_CLASS_NAME}` -o `realpath ${TARGET_OBJECT}` ${TEST_METHODS_MANGLED[$1]}"
 	
 	if [[ "${DRYRUN_FLAG}" == "true" ]]
 	then
@@ -144,6 +158,32 @@ function run_method()
 		${DRIVER} ${RUNNER_ARGS} 
 	fi
 }
+
+if [ -z "${DRIVER}" ]
+then
+    show_usage
+    exit 1
+fi
+
+if [[ "${INTERACTIVE_FLAG}" == "true" ]]
+then
+    echo "List of test methods:"
+    for INDEX in "${!TEST_METHODS[@]}"
+    do
+        echo "	${INDEX})	${TEST_METHODS[${INDEX}]}"
+    done
+    echo -n "Enter number (0-$((${#TEST_METHODS[@]} - 1))):"
+    read TEST_NUMBER
+    if [ ${TEST_NUMBER} -lt 0 -o ${TEST_NUMBER} -ge ${#TEST_METHODS[@]} ]
+    then
+        echo "Invalid test number."
+        exit 1
+    fi
+    echo "Running test method ${TEST_METHODS[${TEST_NUMBER}]}..."
+    run_method ${TEST_NUMBER}
+    echo "Test completed."
+    exit 0
+fi
 
 if [ "${TARGET_CLASS}" ]
 then

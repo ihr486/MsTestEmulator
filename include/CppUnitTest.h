@@ -75,6 +75,13 @@ class Assert
     {
         return std::to_wstring(val);
     }
+    template<typename T>
+    static std::wstring ToString(T *ptr)
+    {
+        wchar_t buf[64];
+        swprintf(buf, 64, L"%p", ptr);
+        return std::wstring(buf);
+    }
     static std::wstring ToString(const char *str)
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>,wchar_t> cvt;
