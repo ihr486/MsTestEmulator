@@ -13,10 +13,12 @@
 
 #define TEST_METHOD_ATTR __attribute__((used,section(".testmethod")))
 #define TEST_METHOD_INIT_ATTR __attribute__((used,section(".testmethodinit")))
+#define TEST_CTOR_ATTR __attribute__((used))
+#define TEST_RUNNER_ATTR __attribute__((used))
 
-#define TEST_CLASS(class_name) struct class_name
-#define TEST_METHOD(method_name) static void TEST_METHOD_ATTR method_name()
-#define TEST_METHOD_INITIALIZE(method_name) static void TEST_METHOD_INIT_ATTR method_name()
+#define TEST_CLASS(class_name) struct class_name : public Microsoft::VisualStudio::CppUnitTestFramework::TestClassBase<class_name>
+#define TEST_METHOD(method_name) void TEST_METHOD_ATTR method_name()
+#define TEST_METHOD_INITIALIZE(method_name) void TEST_METHOD_INIT_ATTR method_name()
 
 namespace Microsoft
 {
@@ -24,6 +26,26 @@ namespace VisualStudio
 {
 namespace CppUnitTestFramework
 {
+class AnotherClass
+{
+};
+template<class T>
+class TestClassBase
+{
+public:
+	TestClassBase() {}
+    static TEST_CTOR_ATTR void *make()
+    {
+        return new T();
+    }
+    static TEST_RUNNER_ATTR void run(void *_instance, void (AnotherClass::*_method)())
+    {
+        T *instance = reinterpret_cast<T *>(_instance);
+        void (T::*method)();
+        method = reinterpret_cast<void (T::*)()>(_method);
+        (instance->*method)();
+    }
+};
 class Logger
 {
 public:
