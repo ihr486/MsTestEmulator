@@ -26,9 +26,6 @@ namespace VisualStudio
 {
 namespace CppUnitTestFramework
 {
-class AnotherClass
-{
-};
 template<class T>
 class TestClassBase
 {
@@ -38,11 +35,8 @@ public:
     {
         return new T();
     }
-    static TEST_RUNNER_ATTR void run(void *_instance, void (AnotherClass::*_method)())
+    static TEST_RUNNER_ATTR void run(T *instance, void (T::*method)())
     {
-        T *instance = reinterpret_cast<T *>(_instance);
-        void (T::*method)();
-        method = reinterpret_cast<void (T::*)()>(_method);
         (instance->*method)();
     }
 };
