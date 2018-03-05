@@ -2,7 +2,7 @@
 
 function show_usage()
 {
-    echo "Usage: ListUnitTests.sh [Target object]" >2
+    echo "Usage: $0 object" >2
 }
 
 if [ $# -lt 1 ]; then
