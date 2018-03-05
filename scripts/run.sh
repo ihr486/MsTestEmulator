@@ -4,7 +4,7 @@ set -e
 
 function show_usage()
 {
-    echo "Usage: $0 [-c target class] [-m target method] [-o stdout] [-e stderr] [-n] [-h] target"
+    echo "Usage: $0 [-c target class] [-m target method] [-o stdout] [-e stderr] [-n] [-h] -d driver target"
 }
 
 function show_help()
@@ -16,6 +16,7 @@ Dependencies:
         bash                This script depends on some shell features specific to bash.
         objdump             objdump is used to inspect the DSO.
 Options:
+        -d <execfile>       Invoke the driver specified by <execfile>.
         -c <classname>      Only perform test methods included in the test class <classname>.
         -m <methodname>     Only perform test methods with the given name.
         -o <file>           Redirect standard output from the tests into a file.
@@ -30,11 +31,14 @@ TARGET_CLASS=
 TARGET_METHOD=
 STDOUT_FILE=
 STDIN_FILE=
+DRIVER=
 DRYRUN_FLAG=false
 
-while getopts c:m:o:e:nh OPT
+while getopts c:m:o:e:d:nh OPT
 do
     case ${OPT} in
+        d) DRIVER=$OPTARG
+            ;;
         c) TARGET_CLASS=$OPTARG
             ;;
         m) TARGET_METHOD=$OPTARG
@@ -52,13 +56,13 @@ done
 
 shift $((OPTIND - 1))
 
-if [ $# -lt 1 ]
+if [ $# -lt 1 -o -z ${DRIVER} ]
 then
 	show_usage
 	exit 1
 fi
 
-TARGET_OBJECT=$1
+TARGET_OBJECT=`pwd`/$1
 
 TEST_METHODS=(`objdump -j .testmethod -T -C ${TARGET_OBJECT} | awk 'NF==7{print $7}'`)
 TEST_METHODS_MANGLED=(`objdump -j .testmethod -T ${TARGET_OBJECT} | awk 'NF==7{print $7}'`)
@@ -130,14 +134,14 @@ function run_method()
 		fi
 	done
 
-	RUNNER_ARGS="${RUNNER_ARGS} `find_ctor ${FULL_CLASS_NAME}` `find_runner ${FULL_CLASS_NAME}` ${TEST_METHODS_MANGLED[$1]}"
+	RUNNER_ARGS="${RUNNER_ARGS} `find_ctor ${FULL_CLASS_NAME}` `find_runner ${FULL_CLASS_NAME}` -o ${TARGET_OBJECT} ${TEST_METHODS_MANGLED[$1]}"
 	
 	if [[ "${DRYRUN_FLAG}" == "true" ]]
 	then
 		echo "Would run command:"
-		echo " runner ${RUNNER_ARGS}"
+		echo "${DRIVER} ${RUNNER_ARGS}"
 	else
-		echo ${RUNNER_ARGS}
+		${DRIVER} ${RUNNER_ARGS} 
 	fi
 }
 

@@ -11,12 +11,13 @@
 #include <string.h>
 #include <wchar.h>
 
-#define TEST_METHOD_ATTR __attribute__((used,section(".testmethod")))
-#define TEST_METHOD_INIT_ATTR __attribute__((used,section(".testmethodinit")))
-#define TEST_CTOR_ATTR __attribute__((used))
-#define TEST_RUNNER_ATTR __attribute__((used))
+#define TEST_CLASS_ATTR __attribute__((visibility("default")))
+#define TEST_METHOD_ATTR __attribute__((used,section(".testmethod"),visibility("default")))
+#define TEST_METHOD_INIT_ATTR __attribute__((used,section(".testmethodinit"),visibility("default")))
+#define TEST_CTOR_ATTR __attribute__((used,visibility("default")))
+#define TEST_RUNNER_ATTR __attribute__((used,visibility("default")))
 
-#define TEST_CLASS(class_name) struct class_name : public Microsoft::VisualStudio::CppUnitTestFramework::TestClassBase<class_name>
+#define TEST_CLASS(class_name) struct TEST_CLASS_ATTR class_name : public Microsoft::VisualStudio::CppUnitTestFramework::TestClassBase<class_name>
 #define TEST_METHOD(method_name) void TEST_METHOD_ATTR method_name()
 #define TEST_METHOD_INITIALIZE(method_name) void TEST_METHOD_INIT_ATTR method_name()
 
