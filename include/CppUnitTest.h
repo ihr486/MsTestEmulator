@@ -105,12 +105,16 @@ public:
         if (expr)
         {
             std::wcerr << L"Assert failed." << std::endl;
+            if (message != NULL)
+                std::wcerr << message << std::endl;
             exit(EXIT_FAILURE);
         }
     }
     static void Fail(const wchar_t *message = NULL)
     {
         std::wcerr << L"Assert failed." << std::endl;
+        if (message != NULL)
+            std::wcerr << message << std::endl;
         exit(EXIT_FAILURE);
     }
 };
