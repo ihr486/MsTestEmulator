@@ -11,6 +11,8 @@ You can just write the tests on the Unit Test Framework and run them on Linux la
 ## Requirements
 MsTestEmulator only supports Linux g++. Support for Clang/LLVM is not yet planned.
 In the first place of course, the test code itself has to be compiled by g++ and run on Linux.
+
+Apart from g++ and objdump, the runner script currently depends on bash.
 ## How it works
 MsTestEmulator consists of three components, the headers (inside include/), the runner (inside runner/) and the testing script (inside scripts/).
 The headers (CppUnitTest.h and SDKDDKVer.h) are to be included by the test code at compile time,
