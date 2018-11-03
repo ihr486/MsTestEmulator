@@ -25,6 +25,7 @@ Options:
         -l                  Just list up test methods (intended for use by scripts).
         -i                  Run in interactive mode.
         -h                  Display this help message and exit.
+		-g					Debug the test using gdb. The test should be compiled in debug mode.
 EOS
 	exit 0
 }
@@ -37,8 +38,9 @@ DRIVER=
 DRYRUN_FLAG=false
 LIST_FLAG=false
 INTERACTIVE_FLAG=false
+DEBUG_FLAG=false
 
-while getopts c:m:o:e:d:nlih OPT
+while getopts c:m:o:e:d:nlihg OPT
 do
     case ${OPT} in
         d) DRIVER=$OPTARG
@@ -57,6 +59,8 @@ do
             ;;
         i) INTERACTIVE_FLAG=true
             ;;
+		g) DEBUG_FLAG=true
+			;;
         h) show_help
             ;;
     esac
@@ -155,7 +159,12 @@ function run_method()
 		echo "Would run command:"
 		echo "${DRIVER} ${RUNNER_ARGS}"
 	else
-		${DRIVER} ${RUNNER_ARGS} 
+		if [[ "${DEBUG_FLAG}" == "false" ]]
+		then
+			${DRIVER} ${RUNNER_ARGS} 
+		else
+			gdb --args ${DRIVER} ${RUNNER_ARGS}
+		fi
 	fi
 }
 
