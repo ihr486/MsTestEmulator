@@ -26,6 +26,7 @@ Options:
         -i                  Run in interactive mode.
         -h                  Display this help message and exit.
 		-g					Debug the test using gdb. The test should be compiled in debug mode.
+        -v                  Debug the test using valgrind. The test should be compiled in debug mode.
 EOS
 	exit 0
 }
@@ -39,6 +40,7 @@ DRYRUN_FLAG=false
 LIST_FLAG=false
 INTERACTIVE_FLAG=false
 DEBUG_FLAG=false
+VALGRIND_FLAG=false
 
 while getopts c:m:o:e:d:nlihg OPT
 do
@@ -61,6 +63,8 @@ do
             ;;
 		g) DEBUG_FLAG=true
 			;;
+        v) VALGRIND_FLAG=true
+            ;;
         h) show_help
             ;;
     esac
@@ -159,12 +163,17 @@ function run_method()
 		echo "Would run command:"
 		echo "${DRIVER} ${RUNNER_ARGS}"
 	else
-		if [[ "${DEBUG_FLAG}" == "false" ]]
-		then
-			${DRIVER} ${RUNNER_ARGS} 
-		else
-			gdb --args ${DRIVER} ${RUNNER_ARGS}
-		fi
+        if [[ "${DEBUG_FLAG}" == "true" ]]
+        then
+            gdb --args ${DRIVER} ${RUNNER_ARGS}
+        else
+            if [[ "${VALGRIND_FLAG}" == "true" ]]
+            then
+                valgrind ${DRIVER} ${RUNNER_ARGS}
+            else
+                ${DRIVER} ${RUNNER_ARGS}
+            fi
+        fi 
 	fi
 }
 
