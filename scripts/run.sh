@@ -4,7 +4,7 @@ set +eu
 
 function show_usage()
 {
-    echo "Usage: $0 [-c target class] [-m target method] [-o stdout] [-e stderr] [-n] [-l] [-h] [-i] -d driver target"
+    echo "Usage: $0 [-c target class] [-m target method] [-o stdout] [-e stderr] [-n] [-l] [-h] [-i] [-g] [-v] -d driver target"
 }
 
 function show_help()
@@ -42,7 +42,7 @@ INTERACTIVE_FLAG=false
 DEBUG_FLAG=false
 VALGRIND_FLAG=false
 
-while getopts c:m:o:e:d:nlihg OPT
+while getopts c:m:o:e:d:nlihgv OPT
 do
     case ${OPT} in
         d) DRIVER=$OPTARG
